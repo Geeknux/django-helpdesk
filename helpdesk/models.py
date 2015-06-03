@@ -13,6 +13,8 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy as _, ugettext
 from django import VERSION
 
+from mezzanine.core.fields import RichTextField
+
 try:
     from django.utils import timezone
 except ImportError:
@@ -890,7 +892,7 @@ class KBItem(models.Model):
         _('Question'),
         )
 
-    answer = models.TextField(
+    answer = RichTextField(
         _('Answer'),
         )
 

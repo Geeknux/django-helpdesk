@@ -20,6 +20,7 @@ from helpdesk.models import Ticket, Queue, UserSettings, KBCategory
 
 
 def homepage(request):
+    ticket = {}
     if not request.user.is_authenticated() and helpdesk_settings.HELPDESK_REDIRECT_TO_LOGIN_BY_DEFAULT:
         return HttpResponseRedirect(reverse('login'))
 
@@ -57,6 +58,14 @@ def homepage(request):
 
         if request.user.is_authenticated() and request.user.email:
             initial_data['submitter_email'] = request.user.email
+            # Display users tickets if configured
+            if helpdesk_settings.HELPDESK_USERS_TICKETS_PUBLIC :
+                try:
+                    print("display tickets")
+                    ticket = Ticket.objects.all().filter(submitter_email = request.user.email)
+                except Ticket.DoesNotExist:
+                    print("don't tickets")
+                    ticket = None
 
         form = PublicTicketForm(initial=initial_data)
         form.fields['queue'].choices = [('', '--------')] + [[q.id, q.title] for q in Queue.objects.filter(allow_public_submission=True)]
@@ -67,11 +76,53 @@ def homepage(request):
         RequestContext(request, {
             'form': form,
             'helpdesk_settings': helpdesk_settings,
-            'kb_categories': knowledgebase_categories
+            'kb_categories': knowledgebase_categories,
+            'tickets': ticket,
         }))
 
 
 def view_ticket(request):
+    if request.method == 'POST': # --- workaround for issue#210
+        from django.utils.html import escape
+
+        ticket_id = request.POST.get('ticket_id','')
+        queue = request.POST.get('ticket_queue','')
+        email = request.POST.get('email','')
+        comment = escape(request.POST.get('comment',''))
+        ticket = False
+        error_message = ''
+
+        try:
+            ticket = Ticket.objects.get(id=ticket_id, queue__slug__iexact=queue, submitter_email__iexact=email)
+        except:
+            ticket = False
+            error_message = _('Invalid ticket ID or e-mail address. Please try again.')
+
+        if ticket:
+            from helpdesk.views.staff import update_ticket
+            # Trick the update_ticket() view into thinking it's being called with
+            # a valid POST.
+            request.POST = { 
+                'public': 1,
+                'title': ticket.title,
+                'comment': comment,
+            }   
+            if ticket.assigned_to:
+                request.POST['owner'] = ticket.assigned_to.id
+            request.GET = {}
+    
+            return update_ticket(request, ticket_id, public=True)
+
+        return render_to_response('helpdesk/public_view_form.html',
+            RequestContext(request, {
+                'ticket': ticket,
+                'email': email,
+                'error_message': error_message,
+                'helpdesk_settings': helpdesk_settings,
+            }))
+
+        # --- END workaround
+        
     ticket_req = request.GET.get('ticket', '')
     ticket = False
     email = request.GET.get('email', '')

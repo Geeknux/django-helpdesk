@@ -44,7 +44,7 @@ HELPDESK_TRANSLATE_TICKET_COMMENTS_LANG = getattr(settings, 'HELPDESK_TRANSLATE_
 HELPDESK_SHOW_CHANGE_PASSWORD = getattr(settings, 'HELPDESK_SHOW_CHANGE_PASSWORD', False)
 
 # allow user to override default layout for 'followups' - work in progress.
-HELPDESK_FOLLOWUP_MOD = getattr(settings, 'HELPDESK_FOLLOWUP_MOD', False)
+HELPDESK_FOLLOWUP_MOD = getattr(settings, 'HELPDESK_FOLLOWUP_MOD', True)
 
 # auto-subscribe user to ticket if (s)he responds to a ticket?
 HELPDESK_AUTO_SUBSCRIBE_ON_TICKET_RESPONSE = getattr(settings, 'HELPDESK_AUTO_SUBSCRIBE_ON_TICKET_RESPONSE', False)
@@ -57,7 +57,7 @@ HELPDESK_VIEW_A_TICKET_PUBLIC = getattr(settings, 'HELPDESK_VIEW_A_TICKET_PUBLIC
 # show 'submit a ticket' section on public page?
 HELPDESK_SUBMIT_A_TICKET_PUBLIC = getattr(settings, 'HELPDESK_SUBMIT_A_TICKET_PUBLIC', True)
 
-
+HELPDESK_USERS_TICKETS_PUBLIC = getattr(settings, 'HELPDESK_USERS_TICKETS_PUBLIC', True)
 
 ''' options for update_ticket views '''
 # allow non-staff users to interact with tickets? this will also change how 'staff_member_required' 
