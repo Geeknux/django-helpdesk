@@ -66,6 +66,14 @@ def dashboard(request):
             status__in = [Ticket.CLOSED_STATUS, Ticket.RESOLVED_STATUS],
         )
 
+
+    #load Last FllowUp Inset
+    followupsTickets = {}
+    for tk in tickets:
+        follow = FollowUp.objects.all().filter(ticket=tk).order_by('-date')[:1]
+        follow = follow.get()
+        followupsTickets[follow.ticket.id] = "[user]" if follow.user is None else follow.user.username
+
     # closed & resolved tickets, assigned to current user
     tickets_closed_resolved =  Ticket.objects.select_related('queue').filter(
             assigned_to=request.user,
@@ -117,6 +125,7 @@ def dashboard(request):
             'all_tickets_reported_by_current_user': all_tickets_reported_by_current_user,
             'dash_tickets': dash_tickets,
             'basic_ticket_stats': basic_ticket_stats,
+            'assigned_tickets_followups':followupsTickets,
         }))
 dashboard = staff_member_required(dashboard)
 

@@ -16,11 +16,12 @@ from django.utils.translation import ugettext as _
 from helpdesk import settings as helpdesk_settings
 from helpdesk.forms import PublicTicketForm
 from helpdesk.lib import send_templated_mail, text_is_spam
-from helpdesk.models import Ticket, Queue, UserSettings, KBCategory
+from helpdesk.models import Ticket, Queue, UserSettings, KBCategory, FollowUp
 
 
 def homepage(request):
-    ticket = {}
+    tickets = {}
+    followupsTickets = {}
     if not request.user.is_authenticated() and helpdesk_settings.HELPDESK_REDIRECT_TO_LOGIN_BY_DEFAULT:
         return HttpResponseRedirect(reverse('login'))
 
@@ -62,7 +63,14 @@ def homepage(request):
             if helpdesk_settings.HELPDESK_USERS_TICKETS_PUBLIC :
                 try:
                     print("display tickets")
-                    ticket = Ticket.objects.all().filter(submitter_email = request.user.email)
+                    tickets = Ticket.objects.all().filter(submitter_email = request.user.email)
+                    if tickets.count() > 0:
+                        #load Last FllowUp Inset
+                        for tk in tickets:
+                            follow = FollowUp.objects.all().filter(ticket=tk).order_by('-date')[:1]
+                            follow = follow.get()
+                            followupsTickets[follow.ticket.id] = "[you]" if follow.user is None else "Support Tech"
+                        
                 except Ticket.DoesNotExist:
                     print("don't tickets")
                     ticket = None
@@ -77,7 +85,8 @@ def homepage(request):
             'form': form,
             'helpdesk_settings': helpdesk_settings,
             'kb_categories': knowledgebase_categories,
-            'tickets': ticket,
+            'tickets': tickets,
+            'assigned_tickets_followups':followupsTickets,
         }))
 
 
