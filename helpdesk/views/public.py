@@ -115,6 +115,7 @@ def view_ticket(request):
                 'public': 1,
                 'title': ticket.title,
                 'comment': comment,
+                'new_status':1,
             }   
             if ticket.assigned_to:
                 request.POST['owner'] = ticket.assigned_to.id
